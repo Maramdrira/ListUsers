@@ -1,25 +1,40 @@
 using Microsoft.EntityFrameworkCore;
 using list.Data;
 using list.Models;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-// Configure DbContext with SQL Server
+// Add services to the container
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add controllers
-builder.Services.AddControllers();
+// Configure JSON options
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Add CORS policy for Angular
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy => policy.WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+});
+
+// Swagger configuration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -27,30 +42,37 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors("AllowAngular");
 app.UseAuthorization();
-
 app.MapControllers();
 
-// Seed initial data (optional - remove in production)
+// Seed initial data
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        context.Database.Migrate(); // Apply pending migrations
+        context.Database.Migrate();
 
-        // Seed initial user if database is empty
         if (!context.Users.Any())
         {
-            context.Users.Add(new User
-            {
-                Username = "admin6",
-                Password = "123", // In production, use proper password hashing
-                Email = "admin6@example.com",
-                CreatedAt = DateTime.UtcNow
-            });
+            context.Users.AddRange(
+                new User
+                {
+                    Username = "admin",
+                    Password = "admin123",
+                    Email = "admin@example.com",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new User
+                {
+                    Username = "user1",
+                    Password = "user123",
+                    Email = "user1@example.com",
+                    CreatedAt = DateTime.UtcNow
+                }
+            );
             context.SaveChanges();
         }
     }
