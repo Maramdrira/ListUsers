@@ -1,1 +1,50 @@
-<p>user-form works!</p>
+<div class="modal-header">
+  <h4 class="modal-title">{{ user?.id ? 'Edit User' : 'Add New User' }}</h4>
+  <button type="button" class="btn-close" (click)="activeModal.dismiss()" [disabled]="isSubmitting"></button>
+</div>
+
+<div class="modal-body">
+  <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+<div class="modal-body">
+  <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" class="form-control" id="username" formControlName="username" required>
+      <div *ngIf="userForm.get('username')?.invalid && (userForm.get('username')?.dirty || userForm.get('username')?.touched)"
+           class="text-danger">
+        Username is required
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input type="email" class="form-control" id="email" formControlName="email" required>
+      <div *ngIf="userForm.get('email')?.invalid && (userForm.get('email')?.dirty || userForm.get('email')?.touched)"
+           class="text-danger">
+        Valid email is required
+      </div>
+    </div>
+
+    <div *ngIf="!user" class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" class="form-control" id="password" formControlName="password" required>
+      <div *ngIf="userForm.get('password')?.invalid && (userForm.get('password')?.dirty || userForm.get('password')?.touched)"
+           class="text-danger">
+        Password is required
+      </div>
+    </div>
+
+   
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-secondary" 
+              (click)="activeModal.dismiss()" [disabled]="isSubmitting">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid || isSubmitting">
+        <span *ngIf="!isSubmitting">{{ user?.id ? 'Update' : 'Save' }}</span>
+        <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm"></span>
+      </button>
+    </div>
+  </form>
+</div>
+
