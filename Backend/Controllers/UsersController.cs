@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using list.Data;
+using System.ComponentModel.DataAnnotations; // For [Required], [EmailAddress]
+using System.ComponentModel.DataAnnotations.Schema; // For [Column] if needed
 
 
 namespace list.Controllers
@@ -59,36 +61,63 @@ namespace list.Controllers
 
         // PUT: api/Users/5
         [HttpPut("{id}")]
-            public async Task<IActionResult> PutUser(int id, User user)
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UserUpdateDto userUpdate)
+        {
+            if (id != userUpdate.Id)
             {
-                if (id != user.Id)
-                {
-                    return BadRequest();
-                }
-
-                _context.Entry(user).State = EntityState.Modified;
-
-                try
-                {
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!UserExists(id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-
-                return NoContent();
+                return BadRequest("ID mismatch");
             }
 
-            // DELETE: api/Users/5
-            [HttpDelete("{id}")]
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Update only these fields
+            user.Username = userUpdate.Username;
+            user.Email = userUpdate.Email;
+
+            // Only update password if it was provided
+            if (!string.IsNullOrEmpty(userUpdate.Password))
+            {
+                user.Password = userUpdate.Password;
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!UserExists(id))
+                {
+                    return NotFound();
+                }
+                throw;
+            }
+        }
+
+        // Add this DTO
+        public class UserUpdateDto
+        {
+            public int Id { get; set; }
+
+            [Required]
+            public string Username { get; set; } = string.Empty;
+
+            [Required]
+            [EmailAddress]
+            public string Email { get; set; } = string.Empty;
+
+            // Make password optional for updates
+            public string? Password { get; set; }
+        }
+
+
+        // DELETE: api/Users/5
+        [HttpDelete("{id}")]
             public async Task<IActionResult> DeleteUser(int id)
             {
                 var user = await _context.Users.FindAsync(id);

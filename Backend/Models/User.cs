@@ -4,23 +4,23 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace list.Models
 {
 
-    // In Models/User.cs
     public class User
     {
         public int Id { get; set; }
 
-        [Required] // Add data annotation
-        public string Username { get; set; } = string.Empty; // Initialize with default
+        [Required(ErrorMessage = "Username is required")]
+        public string Username { get; set; }
 
-        [Required]
-        public string Password { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public string Email { get; set; }
 
-        [Required]
-        [EmailAddress] // Add email validation
-        public string Email { get; set; } = string.Empty;
+        // Make password optional for updates, required for creates
+        [Required(ErrorMessage = "Password is required", AllowEmptyStrings = false)]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        public string Password { get; set; }
 
-        [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
-        }
-    
+    }
+
 }
